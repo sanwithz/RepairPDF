@@ -1082,6 +1082,15 @@
             showLoading();
             
             try {
+                // Configure Thai fonts
+                pdfMake.fonts = {
+                    THSarabunNew: {
+                        normal: 'https://sanwithz.github.io/font/THSarabunNew.ttf',
+                        bold:   'https://sanwithz.github.io/font/THSarabunNewBold.ttf',
+                        italics:'https://sanwithz.github.io/font/THSarabunNewItalic.ttf'
+                    }
+                };
+                
                 // Get form data with fallback values for testing
                 const project = document.getElementById('project').value || 'ทดสอบ';
                 const number = document.getElementById('number').value || 'A1234';
@@ -1131,13 +1140,13 @@
                 const acknowledgerCompany = document.getElementById('acknowledgerCompany').value || 'ใจร้ายวิทยา';
                 const acknowledgerDate = formatThaiDate(document.getElementById('acknowledgerDate').value) || '31 กรกฎาคม 2568';
                 
-                // Create PDF document definition with Roboto font (supports Thai better)
+                // Create PDF document definition with Thai font
                 const docDefinition = {
                     pageSize: 'A4',
                     pageMargins: [40, 60, 40, 60],
                     defaultStyle: {
-                        font: 'Roboto',
-                        fontSize: 12
+                        font: 'THSarabunNew',
+                        fontSize: 14
                     },
                     content: [
                         // Header
