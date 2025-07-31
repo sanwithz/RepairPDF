@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกข้อมูลรายการงานชำรุดบกพร่อง</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <!-- Loading Overlay -->
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    
+    <!-- Sweet Alert -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- pdfmake for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
+
+    <style>
+        * {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f7ff;
+        }
+        
+        .shadow-custom {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .rounded-custom {
+            border-radius: 12px;
+        }
+        
+        .hover-transition {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-transition:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .file-preview {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+        }
+        
+        .modal-image {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background-color: white !important;
+            }
+            
+            .print-section {
+                box-shadow: none !important;
+                border: 1px solid #000 !important;
+            }
+        }
+        
+        .signature-box {
+            border: 1px solid #d1d5db;
+            min-height: 120px;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        
+        .defect-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            text-align: center;
+            padding: 12px 8px;
+            border: 1px solid #d1d5db;
+        }
+        
+        .defect-table td {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            text-align: center;
+        }
+        
+        .status-header {
+            background-color: #e5e7eb;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-700">กำลังประมวลผล...</p>
+        </div>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div id="fileModal" class="modal">
+        <div class="modal-content">
+            <span class="close float-right text-2xl cursor-pointer hover:text-red-500">&times;</span>
+            <div id="modalFileContent" class="text-center mt-4"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-custom mb-6">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-building text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Plan Consultants</h1>
+                        <p class="text-sm text-gray-600">ระบบบันทึกข้อมูลรายการงานชำรุดบกพร่อง</p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="newFormBtn" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>สร้างใหม่
+                    </button>
+                    <button id="listViewBtn" class="btn-secondary">
+                        <i class="fas fa-list mr-2"></i>รายการทั้งหมด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4">
+        <!-- Form Section -->
+        <div id="formSection" class="bg-white rounded-custom shadow-custom p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">สร้างรายการใหม่</h2>
+            
+            <form id="defectForm">
+                <!-- Project Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">โครงการ</label>
+                        <input type="text" id="project" name="project" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">เลขที่</label>
+                        <input type="text" id="number" name="number" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ลูกค้า</label>
+                        <input type="text" id="customer" name="customer" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">หมวดงาน</label>
+                        <select id="category" name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <option value="">เลือกหมวดงาน</option>
+                            <option value="งานโครงสร้าง">งานโครงสร้าง</option>
+                            <option value="งานสถาปัตยกรรม">งานสถาปัตยกรรม</option>
+                            <option value="งานระบบไฟฟ้า">งานระบบไฟฟ้า</option>
+                            <option value="งานระบบประปา">งานระบบประปา</option>
+                            <option value="งานระบบแอร์">งานระบบแอร์</option>
+                            <option value="งานอื่นๆ">งานอื่นๆ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ผู้รับเหมา</label>
+                        <input type="text" id="contractor" name="contractor" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ตรวจสอบ</label>
+                        <input type="date" id="inspectionDate" name="inspectionDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                </div>
+
+                <!-- Defect Items Table -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">รายการงานชำรุดบกพร่อง</h3>
+                        <button type="button" id="addRowBtn" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>เพิ่มรายการ
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table id="defectTable" class="w-full defect-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="w-16">ลำดับ</th>
+                                    <th rowspan="2" class="w-64">รายการ</th>
+                                    <th colspan="3" class="status-header">สถานะ</th>
+                                    <th rowspan="2" class="w-32">กำหนดแก้ไข</th>
+                                    <th rowspan="2" class="w-32">วันที่แก้ไขเสร็จ</th>
+                                    <th rowspan="2" class="w-48">หมายเหตุ</th>
+                                    <th rowspan="2" class="w-32">ไฟล์แนบ</th>
+                                    <th rowspan="2" class="w-16 no-print">จัดการ</th>
+                                </tr>
+                                <tr>
+                                    <th class="w-12">A</th>
+                                    <th class="w-12">B</th>
+                                    <th class="w-12">C</th>
+                                </tr>
+                            </thead>
+                            <tbody id="defectTableBody">
+                                <!-- Dynamic rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Signatures -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="signature-box">
+                        <h4 class="font-semibold text-gray-800 mb-3">ผู้ตรวจสอบ</h4>
+                        <div class="space-y-2">
+                            <input type="text" id="inspectorName" name="inspectorName" placeholder="ชื่อ-นามสกุล" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <input type="text" id="inspectorPosition" name="inspectorPosition" placeholder="ตำแหน่ง" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <input type="text" id="inspectorCompany" name="inspectorCompany" placeholder="บริษัท" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <input type="date" id="inspectorDate" name="inspectorDate" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="signature-box">
+                        <h4 class="font-semibold text-gray-800 mb-3">ผู้รับทราบ</h4>
+                        <div class="space-y-2">
+                            <input type="text" id="acknowledgerName" name="acknowledgerName" placeholder="ชื่อ-นามสกุล" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <input type="text" id="acknowledgerPosition" name="acknowledgerPosition" placeholder="ตำแหน่ง" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <input type="text" id="acknowledgerCompany" name="acknowledgerCompany" placeholder="บริษัท" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <input type="date" id="acknowledgerDate" name="acknowledgerDate" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Buttons -->
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="previewBtn" class="btn-primary">
+                        <i class="fas fa-eye mr-2"></i>ดูตัวอย่าง
+                    </button>
+                    <button type="submit" class="btn-success">
+                        <i class="fas fa-save mr-2"></i>บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- List Section -->
+        <div id="listSection" class="bg-white rounded-custom shadow-custom p-6 mb-6" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">รายการทั้งหมด</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">ลำดับ</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">โครงการ</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">เลขที่</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">ลูกค้า</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">หมวดงาน</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">วันที่ตรวจสอบ</th>
+                            <th class="px-4 py-3 text-center text-sm font-medium text-gray-700">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsList">
+                        <!-- Dynamic records will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div id="previewSection" class="bg-white rounded-custom shadow-custom p-6 mb-6 print-section" style="display: none;">
+            <div class="no-print flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">ตัวอย่างเอกสาร</h2>
+                <div class="flex space-x-3">
+                    <button id="generatePdfBtn" class="btn-primary">
+                        <i class="fas fa-file-pdf mr-2"></i>พิมพ์เป็น PDF
+                    </button>
+                    <button id="printBtn" class="btn-success">
+                        <i class="fas fa-print mr-2"></i>พิมพ์
+                    </button>
+                    <button id="closePreviewBtn" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>ปิด
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Preview Content -->
+            <div id="previewContent">
+                <!-- Content will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztrrR4cKFSnAIlRLtkTxq_1wuEAGnJdpkXsp82SvzOztWxPp91tdrPDwW6pa-OH1qSxg/exec';
+        let currentEditId = null;
+
+        // DOM Content Loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inspectionDate').value = today;
+            document.getElementById('inspectorDate').value = today;
+            document.getElementById('acknowledgerDate').value = today;
+
+            // Add initial defect row
+            addDefectRow();
+
+            // Bind event listeners
+            bindEventListeners();
+
+            // Load records on startup
+            loadAndShowRecords();
+        });
+
+        function bindEventListeners() {
+            // Navigation buttons
+            document.getElementById('newFormBtn').addEventListener('click', function() {
+                showFormSection();
+                resetForm();
+            });
+
+            document.getElementById('listViewBtn').addEventListener('click', function() {
+                showListSection();
+                loadAndShowRecords();
+            });
+
+            // Form buttons
+            document.getElementById('addRowBtn').addEventListener('click', addDefectRow);
+            document.getElementById('previewBtn').addEventListener('click', previewForm);
+            document.getElementById('defectForm').addEventListener('submit', submitForm);
+
+            // Preview buttons
+            document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
+            document.getElementById('printBtn').addEventListener('click', printDocument);
+            document.getElementById('closePreviewBtn').addEventListener('click', function() {
+                document.getElementById('previewSection').style.display = 'none';
+            });
+
+            // Modal close
+            document.querySelector('.close').addEventListener('click', function() {
+                document.getElementById('fileModal').style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('fileModal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        function showFormSection() {
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('listSection').style.display = 'none';
+            document.getElementById('previewSection').style.display = 'none';
+            
+            // Update button states
+            document.getElementById('newFormBtn').className = 'btn-primary';
+            document.getElementById('listViewBtn').className = 'btn-secondary';
+        }
+
+        function showListSection() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('listSection').style.display = 'block';
+            document.getElementById('previewSection').style.display = 'none';
+            
+            // Update button states
+            document.getElementById('newFormBtn').className = 'btn-secondary';
+            document.getElementById('listViewBtn').className = 'btn-primary';
+        }
+
+        function addDefectRow() {
+            const tbody = document.getElementById('defectTableBody');
+            const rowCount = tbody.children.length + 1;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-center font-medium">${rowCount}</td>
+                <td><input type="text" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" name="defectItem" required></td>
+                <td class="text-center"><input type="checkbox" name="statusA" class="w-4 h-4"></td>
+                <td class="text-center"><input type="checkbox" name="statusB" class="w-4 h-4"></td>
+                <td class="text-center"><input type="checkbox" name="statusC" class="w-4 h-4"></td>
+                <td><input type="date" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" name="dueDate"></td>
+                <td><input type="date" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" name="completionDate"></td>
+                <td><input type="text" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" name="remark"></td>
+                <td>
+                    <input type="file" class="w-full text-xs" name="files" multiple accept="image/*,.pdf" onchange="handleFileInputChange(this)">
+                    <div class="file-previews mt-2 flex flex-wrap gap-1"></div>
+                </td>
+                <td class="text-center no-print">
+                    <button type="button" class="btn-danger text-xs px-2 py-1" onclick="deleteRow(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        }
+
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+            renumberRows();
+        }
+
+        function renumberRows() {
+            const rows = document.querySelectorAll('#defectTableBody tr');
+            rows.forEach((row, index) => {
+                row.querySelector('td:first-child').textContent = index + 1;
+            });
+        }
+
+        function handleFileInputChange(input) {
+            const previewContainer = input.parentElement.querySelector('.file-previews');
+            previewContainer.innerHTML = '';
+            
+            Array.from(input.files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'relative inline-block';
+                    
+                    if (file.type.startsWith('image/')) {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" class="file-preview" onclick="showFileModal('${e.target.result}', 'image')" title="${file.name}">
+                            <button type="button" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center" onclick="removeFilePreview(this, ${index})">×</button>
+                        `;
+                    } else if (file.type === 'application/pdf') {
+                        preview.innerHTML = `
+                            <div class="file-preview bg-red-100 flex items-center justify-center cursor-pointer" onclick="showFileModal('${e.target.result}', 'pdf')" title="${file.name}">
+                                <i class="fas fa-file-pdf text-red-600 text-2xl"></i>
+                            </div>
+                            <button type="button" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center" onclick="removeFilePreview(this, ${index})">×</button>
+                        `;
+                    }
+                    
+                    previewContainer.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeFilePreview(button, fileIndex) {
+            const preview = button.parentElement;
+            const input = preview.closest('td').querySelector('input[type="file"]');
+            
+            // Create new FileList without the removed file
+            const dt = new DataTransfer();
+            Array.from(input.files).forEach((file, index) => {
+                if (index !== fileIndex) {
+                    dt.items.add(file);
+                }
+            });
+            input.files = dt.files;
+            
+            preview.remove();
+        }
+
+        function showFileModal(src, type) {
+            const modal = document.getElementById('fileModal');
+            const content = document.getElementById('modalFileContent');
+            
+            if (type === 'image') {
+                content.innerHTML = `<img src="${src}" class="modal-image">`;
+            } else if (type === 'pdf') {
+                content.innerHTML = `<embed src="${src}" type="application/pdf" width="100%" height="600px">`;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function collectFormData() {
+            const formData = new FormData();
+            const form = document.getElementById('defectForm');
+            
+            // Basic form data
+            const basicFields = ['project', 'number', 'customer', 'category', 'contractor', 'inspectionDate',
+                                'inspectorName', 'inspectorPosition', 'inspectorCompany', 'inspectorDate',
+                                'acknowledgerName', 'acknowledgerPosition', 'acknowledgerCompany', 'acknowledgerDate'];
+            
+            basicFields.forEach(field => {
+                formData.append(field, document.getElementById(field).value);
+            });
+
+            // Defect items
+            const defectItems = [];
+            const rows = document.querySelectorAll('#defectTableBody tr');
+            
+            rows.forEach((row, index) => {
+                const item = {
+                    order: index + 1,
+                    defectItem: row.querySelector('input[name="defectItem"]').value,
+                    statusA: row.querySelector('input[name="statusA"]').checked,
+                    statusB: row.querySelector('input[name="statusB"]').checked,
+                    statusC: row.querySelector('input[name="statusC"]').checked,
+                    dueDate: row.querySelector('input[name="dueDate"]').value,
+                    completionDate: row.querySelector('input[name="completionDate"]').value,
+                    remark: row.querySelector('input[name="remark"]').value
+                };
+                
+                defectItems.push(item);
+                
+                // Handle files
+                const fileInput = row.querySelector('input[type="file"]');
+                if (fileInput.files.length > 0) {
+                    Array.from(fileInput.files).forEach((file, fileIndex) => {
+                        formData.append(`files_${index}_${fileIndex}`, file);
+                    });
+                }
+            });
+            
+            formData.append('defectItems', JSON.stringify(defectItems));
+            
+            if (currentEditId) {
+                formData.append('id', currentEditId);
+            }
+            
+            return formData;
+        }
+
+        function previewForm() {
+            const formData = collectFormData();
+            const previewContent = document.getElementById('previewContent');
+            
+            // Generate preview HTML
+            const project = document.getElementById('project').value;
+            const number = document.getElementById('number').value;
+            const customer = document.getElementById('customer').value;
+            const category = document.getElementById('category').value;
+            const contractor = document.getElementById('contractor').value;
+            const inspectionDate = formatThaiDate(document.getElementById('inspectionDate').value);
+            
+            let defectItemsHTML = '';
+            const rows = document.querySelectorAll('#defectTableBody tr');
+            
+            rows.forEach((row, index) => {
+                const item = row.querySelector('input[name="defectItem"]').value;
+                const statusA = row.querySelector('input[name="statusA"]').checked ? '✓' : '';
+                const statusB = row.querySelector('input[name="statusB"]').checked ? '✓' : '';
+                const statusC = row.querySelector('input[name="statusC"]').checked ? '✓' : '';
+                const dueDate = formatThaiDate(row.querySelector('input[name="dueDate"]').value);
+                const completionDate = formatThaiDate(row.querySelector('input[name="completionDate"]').value);
+                const remark = row.querySelector('input[name="remark"]').value;
+                
+                defectItemsHTML += `
+                    <tr>
+                        <td class="border border-gray-300 px-2 py-2 text-center">${index + 1}</td>
+                        <td class="border border-gray-300 px-2 py-2">${item}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center">${statusA}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center">${statusB}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center">${statusC}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center">${dueDate}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center">${completionDate}</td>
+                        <td class="border border-gray-300 px-2 py-2">${remark}</td>
+                    </tr>
+                `;
+            });
+            
+            previewContent.innerHTML = `
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold">รายงานการตรวจสอบงานชำรุดบกพร่อง</h1>
+                    <p class="text-lg mt-2">Plan Consultants</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+                    <div><strong>โครงการ:</strong> ${project}</div>
+                    <div><strong>เลขที่:</strong> ${number}</div>
+                    <div><strong>ลูกค้า:</strong> ${customer}</div>
+                    <div><strong>หมวดงาน:</strong> ${category}</div>
+                    <div><strong>ผู้รับเหมา:</strong> ${contractor}</div>
+                    <div><strong>วันที่ตรวจสอบ:</strong> ${inspectionDate}</div>
+                </div>
+                
+                <table class="w-full mb-6 text-sm">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="border border-gray-300 px-2 py-2 bg-gray-100">ลำดับ</th>
+                            <th rowspan="2" class="border border-gray-300 px-2 py-2 bg-gray-100">รายการ</th>
+                            <th colspan="3" class="border border-gray-300 px-2 py-2 bg-gray-200">สถานะ</th>
+                            <th rowspan="2" class="border border-gray-300 px-2 py-2 bg-gray-100">กำหนดแก้ไข</th>
+                            <th rowspan="2" class="border border-gray-300 px-2 py-2 bg-gray-100">วันที่แก้ไขเสร็จ</th>
+                            <th rowspan="2" class="border border-gray-300 px-2 py-2 bg-gray-100">หมายเหตุ</th>
+                        </tr>
+                        <tr>
+                            <th class="border border-gray-300 px-2 py-2 bg-gray-200">A</th>
+                            <th class="border border-gray-300 px-2 py-2 bg-gray-200">B</th>
+                            <th class="border border-gray-300 px-2 py-2 bg-gray-200">C</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${defectItemsHTML}
+                    </tbody>
+                </table>
+                
+                <div class="text-xs mb-6">
+                    <p><strong>หมายเหตุ:</strong></p>
+                    <p>A = งานชำรุดบกพร่องเล็กน้อย ไม่ส่งผลกระทบต่อการใช้งาน</p>
+                    <p>B = งานชำรุดบกพร่องปานกลาง ส่งผลกระทบต่อการใช้งานบ้าง</p>
+                    <p>C = งานชำรุดบกพร่องมาก ส่งผลกระทบต่อการใช้งานอย่างมาก</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8 mt-8">
+                    <div class="text-center">
+                        <div class="border border-gray-300 h-32 mb-4 flex items-end justify-center pb-2">
+                            <div class="text-sm">
+                                <div>ลงชื่อ: ${document.getElementById('inspectorName').value}</div>
+                                <div>ตำแหน่ง: ${document.getElementById('inspectorPosition').value}</div>
+                                <div>บริษัท: ${document.getElementById('inspectorCompany').value}</div>
+                                <div>วันที่: ${formatThaiDate(document.getElementById('inspectorDate').value)}</div>
+                            </div>
+                        </div>
+                        <p class="font-semibold">ผู้ตรวจสอบ</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="border border-gray-300 h-32 mb-4 flex items-end justify-center pb-2">
+                            <div class="text-sm">
+                                <div>ลงชื่อ: ${document.getElementById('acknowledgerName').value}</div>
+                                <div>ตำแหน่ง: ${document.getElementById('acknowledgerPosition').value}</div>
+                                <div>บริษัท: ${document.getElementById('acknowledgerCompany').value}</div>
+                                <div>วันที่: ${formatThaiDate(document.getElementById('acknowledgerDate').value)}</div>
+                            </div>
+                        </div>
+                        <p class="font-semibold">ผู้รับทราบ</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('previewSection').style.display = 'block';
+            document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            
+            showLoading();
+            
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล',
+                text: 'กรุณารอสักครู่...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const formData = collectFormData();
+            
+            // Convert FormData to regular object for JSONP
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                if (key.startsWith('files_')) {
+                    // Handle files separately
+                    continue;
+                }
+                data[key] = value;
+            }
+            
+            // Send data via JSONP
+            const script = document.createElement('script');
+            const callbackName = 'callback_' + Date.now();
+            
+            window[callbackName] = function(response) {
+                hideLoading();
+                document.head.removeChild(script);
+                delete window[callbackName];
+                
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ!',
+                        text: 'ข้อมูลได้ถูกบันทึกเรียบร้อยแล้ว',
+                        confirmButtonText: 'ตกลง'
+                    }).then(() => {
+                        resetForm();
+                        currentEditId = null;
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { y: 0.6 }
+                        });
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: response.message || 'ไม่สามารถบันทึกข้อมูลได้',
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+            };
+            
+            const params = new URLSearchParams({
+                action: currentEditId ? 'update' : 'create',
+                callback: callbackName,
+                data: JSON.stringify(data)
+            });
+            
+            script.src = `${SCRIPT_URL}?${params.toString()}`;
+            document.head.appendChild(script);
+        }
+
+        function resetForm() {
+            document.getElementById('defectForm').reset();
+            document.getElementById('defectTableBody').innerHTML = '';
+            
+            // Reset dates to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inspectionDate').value = today;
+            document.getElementById('inspectorDate').value = today;
+            document.getElementById('acknowledgerDate').value = today;
+            
+            // Add initial row
+            addDefectRow();
+            
+            currentEditId = null;
+        }
+
+        function loadAndShowRecords() {
+            showLoading();
+            
+            const script = document.createElement('script');
+            const callbackName = 'callback_' + Date.now();
+            
+            window[callbackName] = function(response) {
+                hideLoading();
+                document.head.removeChild(script);
+                delete window[callbackName];
+                
+                if (response.success) {
+                    renderRecordsList(response.data);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'ไม่สามารถโหลดข้อมูลได้',
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+            };
+            
+            const params = new URLSearchParams({
+                action: 'list',
+                callback: callbackName
+            });
+            
+            script.src = `${SCRIPT_URL}?${params.toString()}`;
+            document.head.appendChild(script);
+        }
+
+        function renderRecordsList(records) {
+            const tbody = document.getElementById('recordsList');
+            tbody.innerHTML = '';
+            
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">ไม่มีข้อมูล</td></tr>';
+                return;
+            }
+            
+            records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-4 py-3 text-sm">${index + 1}</td>
+                    <td class="px-4 py-3 text-sm">${record.project}</td>
+                    <td class="px-4 py-3 text-sm">${record.number}</td>
+                    <td class="px-4 py-3 text-sm">${record.customer}</td>
+                    <td class="px-4 py-3 text-sm">${record.category}</td>
+                    <td class="px-4 py-3 text-sm">${formatThaiDate(record.inspectionDate)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex justify-center space-x-2">
+                            <button class="btn-primary text-xs px-2 py-1" onclick="loadRecordForEdit('${record.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-success text-xs px-2 py-1" onclick="viewRecord('${record.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-danger text-xs px-2 py-1" onclick="deleteRecord('${record.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadRecordForEdit(id) {
+            showLoading();
+            
+            const script = document.createElement('script');
+            const callbackName = 'callback_' + Date.now();
+            
+            window[callbackName] = function(response) {
+                hideLoading();
+                document.head.removeChild(script);
+                delete window[callbackName];
+                
+                if (response.success) {
+                    populateFormWithRecord(response.data);
+                    currentEditId = id;
+                    showFormSection();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'ไม่สามารถโหลดข้อมูลได้',
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+            };
+            
+            const params = new URLSearchParams({
+                action: 'get',
+                id: id,
+                callback: callbackName
+            });
+            
+            script.src = `${SCRIPT_URL}?${params.toString()}`;
+            document.head.appendChild(script);
+        }
+
+        function populateFormWithRecord(record) {
+            // Populate basic fields
+            document.getElementById('project').value = record.project || '';
+            document.getElementById('number').value = record.number || '';
+            document.getElementById('customer').value = record.customer || '';
+            document.getElementById('category').value = record.category || '';
+            document.getElementById('contractor').value = record.contractor || '';
+            document.getElementById('inspectionDate').value = record.inspectionDate || '';
+            
+            // Populate signature fields
+            document.getElementById('inspectorName').value = record.inspectorName || '';
+            document.getElementById('inspectorPosition').value = record.inspectorPosition || '';
+            document.getElementById('inspectorCompany').value = record.inspectorCompany || '';
+            document.getElementById('inspectorDate').value = record.inspectorDate || '';
+            document.getElementById('acknowledgerName').value = record.acknowledgerName || '';
+            document.getElementById('acknowledgerPosition').value = record.acknowledgerPosition || '';
+            document.getElementById('acknowledgerCompany').value = record.acknowledgerCompany || '';
+            document.getElementById('acknowledgerDate').value = record.acknowledgerDate || '';
+            
+            // Clear and populate defect items
+            document.getElementById('defectTableBody').innerHTML = '';
+            
+            if (record.defectItems && record.defectItems.length > 0) {
+                record.defectItems.forEach(item => {
+                    addDefectRow();
+                    const lastRow = document.querySelector('#defectTableBody tr:last-child');
+                    
+                    lastRow.querySelector('input[name="defectItem"]').value = item.defectItem || '';
+                    lastRow.querySelector('input[name="statusA"]').checked = item.statusA || false;
+                    lastRow.querySelector('input[name="statusB"]').checked = item.statusB || false;
+                    lastRow.querySelector('input[name="statusC"]').checked = item.statusC || false;
+                    lastRow.querySelector('input[name="dueDate"]').value = item.dueDate || '';
+                    lastRow.querySelector('input[name="completionDate"]').value = item.completionDate || '';
+                    lastRow.querySelector('input[name="remark"]').value = item.remark || '';
+                });
+            } else {
+                addDefectRow();
+            }
+        }
+
+        function viewRecord(id) {
+            showLoading();
+            
+            const script = document.createElement('script');
+            const callbackName = 'callback_' + Date.now();
+            
+            window[callbackName] = function(response) {
+                hideLoading();
+                document.head.removeChild(script);
+                delete window[callbackName];
+                
+                if (response.success) {
+                    populateFormWithRecord(response.data);
+                    previewForm();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'ไม่สามารถโหลดข้อมูลได้',
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+            };
+            
+            const params = new URLSearchParams({
+                action: 'get',
+                id: id,
+                callback: callbackName
+            });
+            
+            script.src = `${SCRIPT_URL}?${params.toString()}`;
+            document.head.appendChild(script);
+        }
+
+        function deleteRecord(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบ',
+                text: 'คุณต้องการลบรายการนี้หรือไม่?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ลบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+                    
+                    const script = document.createElement('script');
+                    const callbackName = 'callback_' + Date.now();
+                    
+                    window[callbackName] = function(response) {
+                        hideLoading();
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                        
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ลบสำเร็จ!',
+                                text: 'รายการได้ถูกลบเรียบร้อยแล้ว',
+                                confirmButtonText: 'ตกลง'
+                            }).then(() => {
+                                loadAndShowRecords();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: 'ไม่สามารถลบข้อมูลได้',
+                                confirmButtonText: 'ตกลง'
+                            });
+                        }
+                    };
+                    
+                    const params = new URLSearchParams({
+                        action: 'delete',
+                        id: id,
+                        callback: callbackName
+                    });
+                    
+                    script.src = `${SCRIPT_URL}?${params.toString()}`;
+                    document.head.appendChild(script);
+                }
+            });
+        }
+
+        function generatePDF() {
+            showLoading();
+            
+            try {
+                // Get form data
+                const project = document.getElementById('project').value;
+                const number = document.getElementById('number').value;
+                const customer = document.getElementById('customer').value;
+                const category = document.getElementById('category').value;
+                const contractor = document.getElementById('contractor').value;
+                const inspectionDate = formatThaiDate(document.getElementById('inspectionDate').value);
+                
+                // Get defect items
+                const defectItems = [];
+                const rows = document.querySelectorAll('#defectTableBody tr');
+                
+                rows.forEach((row, index) => {
+                    const item = row.querySelector('input[name="defectItem"]').value;
+                    const statusA = row.querySelector('input[name="statusA"]').checked ? '✓' : '';
+                    const statusB = row.querySelector('input[name="statusB"]').checked ? '✓' : '';
+                    const statusC = row.querySelector('input[name="statusC"]').checked ? '✓' : '';
+                    const dueDate = formatThaiDate(row.querySelector('input[name="dueDate"]').value);
+                    const completionDate = formatThaiDate(row.querySelector('input[name="completionDate"]').value);
+                    const remark = row.querySelector('input[name="remark"]').value;
+                    
+                    defectItems.push([
+                        (index + 1).toString(),
+                        item,
+                        statusA,
+                        statusB,
+                        statusC,
+                        dueDate,
+                        completionDate,
+                        remark
+                    ]);
+                });
+                
+                // Get signature data
+                const inspectorName = document.getElementById('inspectorName').value;
+                const inspectorPosition = document.getElementById('inspectorPosition').value;
+                const inspectorCompany = document.getElementById('inspectorCompany').value;
+                const inspectorDate = formatThaiDate(document.getElementById('inspectorDate').value);
+                
+                const acknowledgerName = document.getElementById('acknowledgerName').value;
+                const acknowledgerPosition = document.getElementById('acknowledgerPosition').value;
+                const acknowledgerCompany = document.getElementById('acknowledgerCompany').value;
+                const acknowledgerDate = formatThaiDate(document.getElementById('acknowledgerDate').value);
+                
+                // Create PDF document definition
+                const docDefinition = {
+                    pageSize: 'A4',
+                    pageMargins: [40, 60, 40, 60],
+                    defaultStyle: {
+                        font: 'THSarabunNew',
+                        fontSize: 14
+                    },
+                    content: [
+                        // Header
+                        {
+                            text: 'รายงานการตรวจสอบงานชำรุดบกพร่อง',
+                            style: 'header',
+                            alignment: 'center',
+                            margin: [0, 0, 0, 10]
+                        },
+                        {
+                            text: 'Plan Consultants',
+                            style: 'subheader',
+                            alignment: 'center',
+                            margin: [0, 0, 0, 20]
+                        },
+                        
+                        // Project Information
+                        {
+                            columns: [
+                                {
+                                    width: '50%',
+                                    stack: [
+                                        { text: `โครงการ: ${project}`, margin: [0, 0, 0, 5] },
+                                        { text: `ลูกค้า: ${customer}`, margin: [0, 0, 0, 5] },
+                                        { text: `ผู้รับเหมา: ${contractor}`, margin: [0, 0, 0, 5] }
+                                    ]
+                                },
+                                {
+                                    width: '50%',
+                                    stack: [
+                                        { text: `เลขที่: ${number}`, margin: [0, 0, 0, 5] },
+                                        { text: `หมวดงาน: ${category}`, margin: [0, 0, 0, 5] },
+                                        { text: `วันที่ตรวจสอบ: ${inspectionDate}`, margin: [0, 0, 0, 5] }
+                                    ]
+                                }
+                            ],
+                            margin: [0, 0, 0, 20]
+                        },
+                        
+                        // Defect Items Table
+                        {
+                            table: {
+                                headerRows: 2,
+                                widths: [30, '*', 25, 25, 25, 60, 60, 80],
+                                body: [
+                                    // Header row 1
+                                    [
+                                        { text: 'ลำดับ', style: 'tableHeader', rowSpan: 2 },
+                                        { text: 'รายการ', style: 'tableHeader', rowSpan: 2 },
+                                        { text: 'สถานะ', style: 'tableHeaderStatus', colSpan: 3 },
+                                        {},
+                                        {},
+                                        { text: 'กำหนดแก้ไข', style: 'tableHeader', rowSpan: 2 },
+                                        { text: 'วันที่แก้ไขเสร็จ', style: 'tableHeader', rowSpan: 2 },
+                                        { text: 'หมายเหตุ', style: 'tableHeader', rowSpan: 2 }
+                                    ],
+                                    // Header row 2
+                                    [
+                                        {},
+                                        {},
+                                        { text: 'A', style: 'tableHeaderStatus' },
+                                        { text: 'B', style: 'tableHeaderStatus' },
+                                        { text: 'C', style: 'tableHeaderStatus' },
+                                        {},
+                                        {},
+                                        {}
+                                    ],
+                                    // Data rows
+                                    ...defectItems.map(item => item.map(cell => ({ text: cell, style: 'tableCell' })))
+                                ]
+                            },
+                            layout: {
+                                hLineWidth: function() { return 1; },
+                                vLineWidth: function() { return 1; },
+                                hLineColor: function() { return '#000000'; },
+                                vLineColor: function() { return '#000000'; }
+                            },
+                            margin: [0, 0, 0, 20]
+                        },
+                        
+                        // Legend
+                        {
+                            text: 'หมายเหตุ:',
+                            style: 'legendHeader',
+                            margin: [0, 0, 0, 5]
+                        },
+                        {
+                            stack: [
+                                { text: 'A = งานชำรุดบกพร่องเล็กน้อย ไม่ส่งผลกระทบต่อการใช้งาน', fontSize: 10 },
+                                { text: 'B = งานชำรุดบกพร่องปานกลาง ส่งผลกระทบต่อการใช้งานบ้าง', fontSize: 10 },
+                                { text: 'C = งานชำรุดบกพร่องมาก ส่งผลกระทบต่อการใช้งานอย่างมาก', fontSize: 10 }
+                            ],
+                            margin: [0, 0, 0, 30]
+                        },
+                        
+                        // Signatures
+                        {
+                            columns: [
+                                {
+                                    width: '50%',
+                                    stack: [
+                                        {
+                                            canvas: [
+                                                {
+                                                    type: 'rect',
+                                                    x: 0,
+                                                    y: 0,
+                                                    w: 200,
+                                                    h: 80,
+                                                    lineWidth: 1
+                                                }
+                                            ],
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        {
+                                            stack: [
+                                                { text: `ลงชื่อ: ${inspectorName}`, fontSize: 10 },
+                                                { text: `ตำแหน่ง: ${inspectorPosition}`, fontSize: 10 },
+                                                { text: `บริษัท: ${inspectorCompany}`, fontSize: 10 },
+                                                { text: `วันที่: ${inspectorDate}`, fontSize: 10 }
+                                            ],
+                                            margin: [0, -70, 0, 0]
+                                        },
+                                        { text: 'ผู้ตรวจสอบ', alignment: 'center', style: 'signatureLabel' }
+                                    ]
+                                },
+                                {
+                                    width: '50%',
+                                    stack: [
+                                        {
+                                            canvas: [
+                                                {
+                                                    type: 'rect',
+                                                    x: 0,
+                                                    y: 0,
+                                                    w: 200,
+                                                    h: 80,
+                                                    lineWidth: 1
+                                                }
+                                            ],
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        {
+                                            stack: [
+                                                { text: `ลงชื่อ: ${acknowledgerName}`, fontSize: 10 },
+                                                { text: `ตำแหน่ง: ${acknowledgerPosition}`, fontSize: 10 },
+                                                { text: `บริษัท: ${acknowledgerCompany}`, fontSize: 10 },
+                                                { text: `วันที่: ${acknowledgerDate}`, fontSize: 10 }
+                                            ],
+                                            margin: [0, -70, 0, 0]
+                                        },
+                                        { text: 'ผู้รับทราบ', alignment: 'center', style: 'signatureLabel' }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    styles: {
+                        header: {
+                            fontSize: 18,
+                            bold: true
+                        },
+                        subheader: {
+                            fontSize: 16,
+                            bold: true
+                        },
+                        tableHeader: {
+                            bold: true,
+                            fontSize: 12,
+                            color: 'black',
+                            fillColor: '#f3f4f6',
+                            alignment: 'center'
+                        },
+                        tableHeaderStatus: {
+                            bold: true,
+                            fontSize: 12,
+                            color: 'black',
+                            fillColor: '#e5e7eb',
+                            alignment: 'center'
+                        },
+                        tableCell: {
+                            fontSize: 11,
+                            alignment: 'center'
+                        },
+                        legendHeader: {
+                            bold: true,
+                            fontSize: 12
+                        },
+                        signatureLabel: {
+                            bold: true,
+                            fontSize: 12,
+                            margin: [0, 10, 0, 0]
+                        }
+                    }
+                };
+                
+                hideLoading();
+                
+                // Generate and open PDF
+                pdfMake.createPdf(docDefinition).open();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'สร้าง PDF สำเร็จ!',
+                    text: 'เอกสาร PDF ได้ถูกเปิดในหน้าต่างใหม่แล้ว',
+                    confirmButtonText: 'ตกลง'
+                });
+                
+            } catch (error) {
+                hideLoading();
+                console.error('PDF Generation Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'ไม่สามารถสร้าง PDF ได้',
+                    confirmButtonText: 'ตกลง'
+                });
+            }
+        }
+
+        function printDocument() {
+            window.print();
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function formatThaiDate(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            const thaiMonths = [
+                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+            ];
+            
+            const day = date.getDate();
+            const month = thaiMonths[date.getMonth()];
+            const year = date.getFullYear() + 543;
+            
+            return `${day} ${month} ${year}`;
+        }
+    </script>
+</body>
+</html>
