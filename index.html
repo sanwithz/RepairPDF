@@ -1082,57 +1082,62 @@
             showLoading();
             
             try {
-                // Get form data
-                const project = document.getElementById('project').value;
-                const number = document.getElementById('number').value;
-                const customer = document.getElementById('customer').value;
-                const category = document.getElementById('category').value;
-                const contractor = document.getElementById('contractor').value;
-                const inspectionDate = formatThaiDate(document.getElementById('inspectionDate').value);
+                // Get form data with fallback values for testing
+                const project = document.getElementById('project').value || 'ทดสอบ';
+                const number = document.getElementById('number').value || 'A1234';
+                const customer = document.getElementById('customer').value || 'นายทดลอง ใจดี';
+                const category = document.getElementById('category').value || 'งานโครงสร้าง';
+                const contractor = document.getElementById('contractor').value || 'นายสมหมาย ใจเมตตา';
+                const inspectionDate = formatThaiDate(document.getElementById('inspectionDate').value) || '31 กรกฎาคม 2568';
                 
-                // Get defect items
+                // Get defect items with fallback
                 const defectItems = [];
                 const rows = document.querySelectorAll('#defectTableBody tr');
                 
-                rows.forEach((row, index) => {
-                    const item = row.querySelector('input[name="defectItem"]').value;
-                    const statusA = row.querySelector('input[name="statusA"]').checked ? '✓' : '';
-                    const statusB = row.querySelector('input[name="statusB"]').checked ? '✓' : '';
-                    const statusC = row.querySelector('input[name="statusC"]').checked ? '✓' : '';
-                    const dueDate = formatThaiDate(row.querySelector('input[name="dueDate"]').value);
-                    const completionDate = formatThaiDate(row.querySelector('input[name="completionDate"]').value);
-                    const remark = row.querySelector('input[name="remark"]').value;
-                    
-                    defectItems.push([
-                        (index + 1).toString(),
-                        item,
-                        statusA,
-                        statusB,
-                        statusC,
-                        dueDate,
-                        completionDate,
-                        remark
-                    ]);
-                });
+                if (rows.length === 0) {
+                    // Add sample data if no rows exist
+                    defectItems.push(['1', 'เสาปูน', '✓', '✓', '✓', '31 กรกฎาคม 2568', '2 สิงหาคม 2568', 'xxx']);
+                } else {
+                    rows.forEach((row, index) => {
+                        const item = row.querySelector('input[name="defectItem"]').value || 'รายการตัวอย่าง';
+                        const statusA = row.querySelector('input[name="statusA"]').checked ? '✓' : '';
+                        const statusB = row.querySelector('input[name="statusB"]').checked ? '✓' : '';
+                        const statusC = row.querySelector('input[name="statusC"]').checked ? '✓' : '';
+                        const dueDate = formatThaiDate(row.querySelector('input[name="dueDate"]').value) || '';
+                        const completionDate = formatThaiDate(row.querySelector('input[name="completionDate"]').value) || '';
+                        const remark = row.querySelector('input[name="remark"]').value || '';
+                        
+                        defectItems.push([
+                            (index + 1).toString(),
+                            item,
+                            statusA,
+                            statusB,
+                            statusC,
+                            dueDate,
+                            completionDate,
+                            remark
+                        ]);
+                    });
+                }
                 
-                // Get signature data
-                const inspectorName = document.getElementById('inspectorName').value;
-                const inspectorPosition = document.getElementById('inspectorPosition').value;
-                const inspectorCompany = document.getElementById('inspectorCompany').value;
-                const inspectorDate = formatThaiDate(document.getElementById('inspectorDate').value);
+                // Get signature data with fallback
+                const inspectorName = document.getElementById('inspectorName').value || 'นายสมัคร รักเรียน';
+                const inspectorPosition = document.getElementById('inspectorPosition').value || 'ผู้ตรวจสอบชำนาญการ';
+                const inspectorCompany = document.getElementById('inspectorCompany').value || 'ใจดีวิทยา';
+                const inspectorDate = formatThaiDate(document.getElementById('inspectorDate').value) || '31 กรกฎาคม 2568';
                 
-                const acknowledgerName = document.getElementById('acknowledgerName').value;
-                const acknowledgerPosition = document.getElementById('acknowledgerPosition').value;
-                const acknowledgerCompany = document.getElementById('acknowledgerCompany').value;
-                const acknowledgerDate = formatThaiDate(document.getElementById('acknowledgerDate').value);
+                const acknowledgerName = document.getElementById('acknowledgerName').value || 'นางสมศรี ใจกล้า';
+                const acknowledgerPosition = document.getElementById('acknowledgerPosition').value || 'ผู้รับทราบเชี่ยวชาญ';
+                const acknowledgerCompany = document.getElementById('acknowledgerCompany').value || 'ใจร้ายวิทยา';
+                const acknowledgerDate = formatThaiDate(document.getElementById('acknowledgerDate').value) || '31 กรกฎาคม 2568';
                 
-                // Create PDF document definition
+                // Create PDF document definition with Roboto font (supports Thai better)
                 const docDefinition = {
                     pageSize: 'A4',
                     pageMargins: [40, 60, 40, 60],
                     defaultStyle: {
-                        font: 'THSarabunNew',
-                        fontSize: 14
+                        font: 'Roboto',
+                        fontSize: 12
                     },
                     content: [
                         // Header
@@ -1155,17 +1160,17 @@
                                 {
                                     width: '50%',
                                     stack: [
-                                        { text: `โครงการ: ${project}`, margin: [0, 0, 0, 5] },
-                                        { text: `ลูกค้า: ${customer}`, margin: [0, 0, 0, 5] },
-                                        { text: `ผู้รับเหมา: ${contractor}`, margin: [0, 0, 0, 5] }
+                                        { text: 'โครงการ: ' + project, margin: [0, 0, 0, 5] },
+                                        { text: 'ลูกค้า: ' + customer, margin: [0, 0, 0, 5] },
+                                        { text: 'ผู้รับเหมา: ' + contractor, margin: [0, 0, 0, 5] }
                                     ]
                                 },
                                 {
                                     width: '50%',
                                     stack: [
-                                        { text: `เลขที่: ${number}`, margin: [0, 0, 0, 5] },
-                                        { text: `หมวดงาน: ${category}`, margin: [0, 0, 0, 5] },
-                                        { text: `วันที่ตรวจสอบ: ${inspectionDate}`, margin: [0, 0, 0, 5] }
+                                        { text: 'เลขที่: ' + number, margin: [0, 0, 0, 5] },
+                                        { text: 'หมวดงาน: ' + category, margin: [0, 0, 0, 5] },
+                                        { text: 'วันที่ตรวจสอบ: ' + inspectionDate, margin: [0, 0, 0, 5] }
                                     ]
                                 }
                             ],
@@ -1201,12 +1206,12 @@
                                         {}
                                     ],
                                     // Data rows
-                                    ...defectItems.map(item => item.map(cell => ({ text: cell, style: 'tableCell' })))
+                                    ...defectItems.map(item => item.map(cell => ({ text: cell || '', style: 'tableCell' })))
                                 ]
                             },
                             layout: {
-                                hLineWidth: function() { return 1; },
-                                vLineWidth: function() { return 1; },
+                                hLineWidth: function() { return 0.5; },
+                                vLineWidth: function() { return 0.5; },
                                 hLineColor: function() { return '#000000'; },
                                 vLineColor: function() { return '#000000'; }
                             },
@@ -1235,26 +1240,22 @@
                                     width: '50%',
                                     stack: [
                                         {
-                                            canvas: [
-                                                {
-                                                    type: 'rect',
-                                                    x: 0,
-                                                    y: 0,
-                                                    w: 200,
-                                                    h: 80,
-                                                    lineWidth: 1
-                                                }
-                                            ],
-                                            margin: [0, 0, 0, 10]
+                                            table: {
+                                                widths: ['*'],
+                                                heights: [80],
+                                                body: [
+                                                    [{ text: '', border: [true, true, true, true] }]
+                                                ]
+                                            },
+                                            margin: [0, 0, 0, 5]
                                         },
                                         {
                                             stack: [
-                                                { text: `ลงชื่อ: ${inspectorName}`, fontSize: 10 },
-                                                { text: `ตำแหน่ง: ${inspectorPosition}`, fontSize: 10 },
-                                                { text: `บริษัท: ${inspectorCompany}`, fontSize: 10 },
-                                                { text: `วันที่: ${inspectorDate}`, fontSize: 10 }
-                                            ],
-                                            margin: [0, -70, 0, 0]
+                                                { text: 'ลงชื่อ: ' + inspectorName, fontSize: 10, margin: [0, 2, 0, 2] },
+                                                { text: 'ตำแหน่ง: ' + inspectorPosition, fontSize: 10, margin: [0, 2, 0, 2] },
+                                                { text: 'บริษัท: ' + inspectorCompany, fontSize: 10, margin: [0, 2, 0, 2] },
+                                                { text: 'วันที่: ' + inspectorDate, fontSize: 10, margin: [0, 2, 0, 2] }
+                                            ]
                                         },
                                         { text: 'ผู้ตรวจสอบ', alignment: 'center', style: 'signatureLabel' }
                                     ]
@@ -1263,26 +1264,22 @@
                                     width: '50%',
                                     stack: [
                                         {
-                                            canvas: [
-                                                {
-                                                    type: 'rect',
-                                                    x: 0,
-                                                    y: 0,
-                                                    w: 200,
-                                                    h: 80,
-                                                    lineWidth: 1
-                                                }
-                                            ],
-                                            margin: [0, 0, 0, 10]
+                                            table: {
+                                                widths: ['*'],
+                                                heights: [80],
+                                                body: [
+                                                    [{ text: '', border: [true, true, true, true] }]
+                                                ]
+                                            },
+                                            margin: [0, 0, 0, 5]
                                         },
                                         {
                                             stack: [
-                                                { text: `ลงชื่อ: ${acknowledgerName}`, fontSize: 10 },
-                                                { text: `ตำแหน่ง: ${acknowledgerPosition}`, fontSize: 10 },
-                                                { text: `บริษัท: ${acknowledgerCompany}`, fontSize: 10 },
-                                                { text: `วันที่: ${acknowledgerDate}`, fontSize: 10 }
-                                            ],
-                                            margin: [0, -70, 0, 0]
+                                                { text: 'ลงชื่อ: ' + acknowledgerName, fontSize: 10, margin: [0, 2, 0, 2] },
+                                                { text: 'ตำแหน่ง: ' + acknowledgerPosition, fontSize: 10, margin: [0, 2, 0, 2] },
+                                                { text: 'บริษัท: ' + acknowledgerCompany, fontSize: 10, margin: [0, 2, 0, 2] },
+                                                { text: 'วันที่: ' + acknowledgerDate, fontSize: 10, margin: [0, 2, 0, 2] }
+                                            ]
                                         },
                                         { text: 'ผู้รับทราบ', alignment: 'center', style: 'signatureLabel' }
                                     ]
@@ -1292,38 +1289,38 @@
                     ],
                     styles: {
                         header: {
-                            fontSize: 18,
+                            fontSize: 16,
                             bold: true
                         },
                         subheader: {
-                            fontSize: 16,
+                            fontSize: 14,
                             bold: true
                         },
                         tableHeader: {
                             bold: true,
-                            fontSize: 12,
+                            fontSize: 10,
                             color: 'black',
                             fillColor: '#f3f4f6',
                             alignment: 'center'
                         },
                         tableHeaderStatus: {
                             bold: true,
-                            fontSize: 12,
+                            fontSize: 10,
                             color: 'black',
                             fillColor: '#e5e7eb',
                             alignment: 'center'
                         },
                         tableCell: {
-                            fontSize: 11,
+                            fontSize: 9,
                             alignment: 'center'
                         },
                         legendHeader: {
                             bold: true,
-                            fontSize: 12
+                            fontSize: 11
                         },
                         signatureLabel: {
                             bold: true,
-                            fontSize: 12,
+                            fontSize: 11,
                             margin: [0, 10, 0, 0]
                         }
                     }
@@ -1331,7 +1328,7 @@
                 
                 hideLoading();
                 
-                // Generate and open PDF
+                // Generate and open PDF in new window
                 pdfMake.createPdf(docDefinition).open();
                 
                 Swal.fire({
@@ -1347,7 +1344,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด!',
-                    text: 'ไม่สามารถสร้าง PDF ได้',
+                    text: 'ไม่สามารถสร้าง PDF ได้: ' + error.message,
                     confirmButtonText: 'ตกลง'
                 });
             }
